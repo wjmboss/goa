@@ -10,15 +10,13 @@ package server
 import (
 	"context"
 	"net/http"
-	"strconv"
 
-	goa "goa.design/goa"
 	goahttp "goa.design/goa/http"
 )
 
-// EncodeAddResponse returns an encoder for responses returned by the calc add
-// endpoint.
-func EncodeAddResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+// EncodeAddedResponse returns an encoder for responses returned by the calc
+// added endpoint.
+func EncodeAddedResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
 		res := v.(int)
 		enc := encoder(ctx, w)
@@ -28,37 +26,11 @@ func EncodeAddResponse(encoder func(context.Context, http.ResponseWriter) goahtt
 	}
 }
 
-// DecodeAddRequest returns a decoder for requests sent to the calc add
+// DecodeAddedRequest returns a decoder for requests sent to the calc added
 // endpoint.
-func DecodeAddRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+func DecodeAddedRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
 	return func(r *http.Request) (interface{}, error) {
-		var (
-			a   int
-			b   int
-			err error
 
-			params = mux.Vars(r)
-		)
-		{
-			aRaw := params["a"]
-			v, err2 := strconv.ParseInt(aRaw, 10, strconv.IntSize)
-			if err2 != nil {
-				err = goa.MergeErrors(err, goa.InvalidFieldTypeError("a", aRaw, "integer"))
-			}
-			a = int(v)
-		}
-		{
-			bRaw := params["b"]
-			v, err2 := strconv.ParseInt(bRaw, 10, strconv.IntSize)
-			if err2 != nil {
-				err = goa.MergeErrors(err, goa.InvalidFieldTypeError("b", bRaw, "integer"))
-			}
-			b = int(v)
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		return NewAddAddPayload(a, b), nil
+		return body, nil
 	}
 }

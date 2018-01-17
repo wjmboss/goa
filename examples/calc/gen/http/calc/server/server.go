@@ -19,7 +19,7 @@ import (
 // Server lists the calc service endpoint HTTP handlers.
 type Server struct {
 	Mounts []*MountPoint
-	Add    http.Handler
+	Added  http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -42,9 +42,9 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"Add", "GET", "/add/{a}/{b}"},
+			{"Added", "GET", "/add"},
 		},
-		Add: NewAddHandler(e.Add, mux, dec, enc),
+		Added: NewAddedHandler(e.Added, mux, dec, enc),
 	}
 }
 
@@ -53,32 +53,32 @@ func (s *Server) Service() string { return "calc" }
 
 // Mount configures the mux to serve the calc endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
-	MountAddHandler(mux, h.Add)
+	MountAddedHandler(mux, h.Added)
 }
 
-// MountAddHandler configures the mux to serve the "calc" service "add"
+// MountAddedHandler configures the mux to serve the "calc" service "added"
 // endpoint.
-func MountAddHandler(mux goahttp.Muxer, h http.Handler) {
+func MountAddedHandler(mux goahttp.Muxer, h http.Handler) {
 	f, ok := h.(http.HandlerFunc)
 	if !ok {
 		f = func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/add/{a}/{b}", f)
+	mux.Handle("GET", "/add", f)
 }
 
-// NewAddHandler creates a HTTP handler which loads the HTTP request and calls
-// the "calc" service "add" endpoint.
-func NewAddHandler(
+// NewAddedHandler creates a HTTP handler which loads the HTTP request and
+// calls the "calc" service "added" endpoint.
+func NewAddedHandler(
 	endpoint goa.Endpoint,
 	mux goahttp.Muxer,
 	dec func(*http.Request) goahttp.Decoder,
 	enc func(context.Context, http.ResponseWriter) goahttp.Encoder,
 ) http.Handler {
 	var (
-		decodeRequest  = DecodeAddRequest(mux, dec)
-		encodeResponse = EncodeAddResponse(enc)
+		decodeRequest  = DecodeAddedRequest(mux, dec)
+		encodeResponse = EncodeAddedResponse(enc)
 		encodeError    = goahttp.ErrorEncoder(enc)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

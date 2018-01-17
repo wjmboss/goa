@@ -26,7 +26,8 @@ func RequestBody(a *EndpointExpr) *design.AttributeExpr {
 	)
 
 	bodyOnly := len(*design.AsObject(headers.Type)) == 0 &&
-		len(*design.AsObject(params.Type)) == 0
+		len(*design.AsObject(params.Type)) == 0 &&
+		a.MapParams == nil
 
 	// 1. If Payload is not an object then check whether there are params or
 	// headers defined and if so return empty type (payload encoded in

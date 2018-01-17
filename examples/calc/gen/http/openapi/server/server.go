@@ -40,7 +40,7 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"../../gen/http/openapi.json", "GET", "/swagger.json"},
+			{"../../http/openapi.json", "GET", "/swagger.json"},
 		},
 	}
 }
@@ -51,7 +51,7 @@ func (s *Server) Service() string { return "openapi" }
 // Mount configures the mux to serve the openapi endpoints.
 func Mount(mux goahttp.Muxer) {
 	MountHTTPOpenapiJSON(mux, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "../../gen/http/openapi.json")
+		http.ServeFile(w, r, "../../http/openapi.json")
 	}))
 }
 

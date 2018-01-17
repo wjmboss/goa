@@ -17,8 +17,8 @@ import (
 
 // Client lists the calc service endpoint HTTP clients.
 type Client struct {
-	// Add Doer is the HTTP client used to make requests to the add endpoint.
-	AddDoer goahttp.Doer
+	// Added Doer is the HTTP client used to make requests to the added endpoint.
+	AddedDoer goahttp.Doer
 
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
@@ -40,7 +40,7 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		AddDoer:             doer,
+		AddedDoer:           doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -49,22 +49,22 @@ func NewClient(
 	}
 }
 
-// Add returns a endpoint that makes HTTP requests to the calc service add
+// Added returns a endpoint that makes HTTP requests to the calc service added
 // server.
-func (c *Client) Add() goa.Endpoint {
+func (c *Client) Added() goa.Endpoint {
 	var (
-		decodeResponse = DecodeAddResponse(c.decoder, c.RestoreResponseBody)
+		decodeResponse = DecodeAddedResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v interface{}) (interface{}, error) {
-		req, err := c.BuildAddRequest(v)
+		req, err := c.BuildAddedRequest(v)
 		if err != nil {
 			return nil, err
 		}
 
-		resp, err := c.AddDoer.Do(req)
+		resp, err := c.AddedDoer.Do(req)
 
 		if err != nil {
-			return nil, goahttp.ErrRequestError("calc", "add", err)
+			return nil, goahttp.ErrRequestError("calc", "added", err)
 		}
 		return decodeResponse(resp)
 	}
