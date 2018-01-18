@@ -13,6 +13,21 @@ import (
 
 // The calc service performs operations on numbers
 type Service interface {
+	// Add implements add.
+	Add(context.Context, *AddPayload) (int, error)
 	// Added implements added.
-	Added(context.Context, map[string]string) (int, error)
+	Added(context.Context, *AddedPayload) (int, error)
+}
+
+// AddPayload is the payload type of the calc service add method.
+type AddPayload struct {
+	// Left operand
+	A int
+	// Right operand
+	B int
+}
+
+// AddedPayload is the payload type of the calc service added method.
+type AddedPayload struct {
+	Operands map[string]int
 }

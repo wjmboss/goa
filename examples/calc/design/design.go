@@ -13,7 +13,7 @@ var _ = API("calc", func() {
 var _ = Service("calc", func() {
 	Description("The calc service performs operations on numbers")
 	// Method describes a service method (endpoint)
-	/*Method("add", func() {
+	Method("add", func() {
 		// Payload describes the method payload
 		// Here the payload is an object that consists of two fields
 		Payload(func() {
@@ -34,13 +34,16 @@ var _ = Service("calc", func() {
 			// The result is encoded in the response body
 			Response(StatusOK)
 		})
-	})*/
+	})
 	Method("added", func() {
-		Payload(MapOf(String, String))
+		Payload(func() {
+			Attribute("operands", MapOf(String, Int))
+			Required("operands")
+		})
 		Result(Int)
 		HTTP(func() {
 			GET("/add")
-			MapParams()
+			MapParams("operands")
 			Response(StatusOK)
 		})
 	})

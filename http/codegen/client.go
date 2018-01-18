@@ -222,6 +222,16 @@ func {{ .RequestEncoder }}(encoder func(*http.Request) goahttp.Encoder) func(*ht
 			{{- if .Pointer }}
 		}
 			{{- end }}
+		{{- else }}
+		for key, val := range p {
+			{{- if .Map }}
+			values.Add(key, val)
+			{{- else if .MapStringSlice }}
+			for _, v := range val {
+				values.Add(key, v)
+			}
+			{{- end }}
+		}
 		{{- end }}
 	{{- end }}
 	{{- if .Payload.Request.QueryParams }}

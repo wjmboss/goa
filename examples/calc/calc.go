@@ -27,7 +27,7 @@ func (s *calcsvcSvc) Add(ctx context.Context, p *calcsvc.AddPayload) (int, error
 }
 
 // Added implements added.
-func (s *calcsvcSvc) Added(ctx context.Context, p map[string]string) (int, error) {
+func (s *calcsvcSvc) Added(ctx context.Context, p *calcsvc.AddedPayload) (int, error) {
 	var res int
 	s.logger.Print(fmt.Sprintf("%#v", p), "calc.added")
 	return res, nil

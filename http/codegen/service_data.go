@@ -705,7 +705,7 @@ func buildPayloadData(svc *service.Data, s *httpdesign.ServiceExpr, e *httpdesig
 			serverBodyData = buildBodyType(svc, s, e, e.Body, payload, true, true, sd)
 			clientBodyData = buildBodyType(svc, s, e, e.Body, payload, true, false, sd)
 			paramsData     = extractPathParams(e.PathParams(), payload, svc.Scope)
-			queryData      = extractQueryParams(e.QueryParams(), payload, svc.Scope)
+			queryData      = extractQueryParams(e, payload, svc.Scope)
 			headersData    = extractHeaders(e.MappedHeaders(), payload, true, svc.Scope)
 
 			mustValidate bool
@@ -912,7 +912,12 @@ func buildPayloadData(svc *service.Data, s *httpdesign.ServiceExpr, e *httpdesig
 		ref = svc.Scope.GoFullTypeRef(payload, svc.PkgName)
 	}
 	if init == nil {
-		if o := design.AsObject(e.PathParams().Type); o != nil && len(*o) > 0 {
+		if e.MapParams != nil {
+			returnValue = *e.MapParams
+			if returnValue == "" {
+				returnValue = "query"
+			}
+		} else if o := design.AsObject(e.PathParams().Type); o != nil && len(*o) > 0 {
 			returnValue = codegen.Goify((*o)[0].Name, false)
 		} else if o := design.AsObject(e.QueryParams().Type); o != nil && len(*o) > 0 {
 			returnValue = codegen.Goify((*o)[0].Name, false)
@@ -1434,8 +1439,39 @@ func extractPathParams(a *design.MappedAttributeExpr, serviceType *design.Attrib
 	return params
 }
 
-func extractQueryParams(a *design.MappedAttributeExpr, serviceType *design.AttributeExpr, scope *codegen.NameScope) []*ParamData {
+func extractQueryParams(e *httpdesign.EndpointExpr, serviceType *design.AttributeExpr, scope *codegen.NameScope) []*ParamData {
 	var params []*ParamData
+	/*if e.MapParams != nil {
+		name := *e.MapParams
+		if name == "" {
+			name = "query"
+		}
+		mp := design.AsMap(serviceType.Type)
+		fieldName := codegen.Goify(name, true)
+		if !design.IsObject(serviceType.Type) {
+			fieldName = ""
+		}
+		params = append(params, &ParamData{
+			Name:          name,
+			AttributeName: name,
+			FieldName:     fieldName,
+			VarName:       codegen.Goify(name, false),
+			Required:      false,
+			Type:          serviceType.Type,
+			TypeName:      scope.GoTypeName(serviceType),
+			TypeRef:       scope.GoTypeRef(serviceType),
+			Pointer:       false,
+			Slice:         false,
+			StringSlice:   false,
+			Map:           mp != nil,
+			MapStringSlice: mp != nil &&
+				mp.KeyType.Type.Kind() == design.StringKind &&
+				mp.ElemType.Type.Kind() == design.ArrayKind &&
+				design.AsArray(mp.ElemType.Type).ElemType.Type.Kind() == design.StringKind,
+		})
+		return params
+	}*/
+	a := e.QueryParams()
 	codegen.WalkMappedAttr(a, func(name, elem string, required bool, c *design.AttributeExpr) error {
 		var (
 			varn    = codegen.Goify(name, false)
