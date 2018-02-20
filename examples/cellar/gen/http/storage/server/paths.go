@@ -36,3 +36,8 @@ func RemoveStoragePath(id string) string {
 func RateStoragePath() string {
 	return "/storage/rate"
 }
+
+// UploadStoragePath returns the URL path to the storage service upload HTTP endpoint.
+func UploadStoragePath() string {
+	return "/storage/upload"
+}

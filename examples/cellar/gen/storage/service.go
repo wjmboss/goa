@@ -24,6 +24,8 @@ type Service interface {
 	Remove(context.Context, *RemovePayload) error
 	// Rate bottles by IDs
 	Rate(context.Context, map[uint32][]string) error
+	// Upload menu
+	Upload(context.Context, *UploadPayload) error
 }
 
 // StoredBottleCollection is the result type of the storage service list method.
@@ -75,6 +77,12 @@ type Bottle struct {
 type RemovePayload struct {
 	// ID of bottle to remove
 	ID string
+}
+
+// UploadPayload is the payload type of the storage service upload method.
+type UploadPayload struct {
+	// Path to the file
+	Path *string
 }
 
 type Winery struct {

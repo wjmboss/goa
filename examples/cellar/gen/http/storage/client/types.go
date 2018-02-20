@@ -32,6 +32,13 @@ type AddRequestBody struct {
 	Rating *uint32 `form:"rating,omitempty" json:"rating,omitempty" xml:"rating,omitempty"`
 }
 
+// UploadRequestBody is the type of the "storage" service "upload" endpoint
+// HTTP request body.
+type UploadRequestBody struct {
+	// Path to the file
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+}
+
 // ListResponseBody is the type of the "storage" service "list" endpoint HTTP
 // response body.
 type ListResponseBody []*StoredBottleResponseBody
@@ -162,6 +169,15 @@ func NewAddRequestBody(p *storage.Bottle) *AddRequestBody {
 				Percentage: val.Percentage,
 			}
 		}
+	}
+	return body
+}
+
+// NewUploadRequestBody builds the HTTP request body from the payload of the
+// "upload" endpoint of the "storage" service.
+func NewUploadRequestBody(p *storage.UploadPayload) *UploadRequestBody {
+	body := &UploadRequestBody{
+		Path: p.Path,
 	}
 	return body
 }

@@ -72,4 +72,17 @@ var _ = Service("storage", func() {
 			Response(StatusOK)
 		})
 	})
+
+	Method("upload", func() {
+		Description("Upload menu")
+		Payload(func() {
+			Attribute("path", String, "Path to the file", func() {
+				Metadata("server:file:path", "/tmp")
+			})
+		})
+		HTTP(func() {
+			POST("/upload")
+			Response(StatusOK)
+		})
+	})
 })

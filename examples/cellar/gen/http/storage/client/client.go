@@ -33,6 +33,9 @@ type Client struct {
 	// Rate Doer is the HTTP client used to make requests to the rate endpoint.
 	RateDoer goahttp.Doer
 
+	// Upload Doer is the HTTP client used to make requests to the upload endpoint.
+	UploadDoer goahttp.Doer
+
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -58,6 +61,7 @@ func NewClient(
 		AddDoer:             doer,
 		RemoveDoer:          doer,
 		RateDoer:            doer,
+		UploadDoer:          doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -181,6 +185,32 @@ func (c *Client) Rate() goa.Endpoint {
 
 		if err != nil {
 			return nil, goahttp.ErrRequestError("storage", "rate", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Upload returns a endpoint that makes HTTP requests to the storage service
+// upload server.
+func (c *Client) Upload() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeUploadRequest(c.encoder)
+		decodeResponse = DecodeUploadResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildUploadRequest(v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := c.UploadDoer.Do(req)
+
+		if err != nil {
+			return nil, goahttp.ErrRequestError("storage", "upload", err)
 		}
 		return decodeResponse(resp)
 	}

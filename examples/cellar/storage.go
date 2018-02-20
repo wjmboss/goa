@@ -103,3 +103,9 @@ func (s *storageSvc) Rate(ctx context.Context, p map[uint32][]string) error {
 	}
 	return nil
 }
+
+// Upload menu
+func (s *storageSvc) Upload(ctx context.Context, p *storage.UploadPayload) error {
+	s.logger.Print("storage.upload")
+	return nil
+}

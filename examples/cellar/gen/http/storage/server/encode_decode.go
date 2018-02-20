@@ -193,6 +193,36 @@ func DecodeRateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 	}
 }
 
+// EncodeUploadResponse returns an encoder for responses returned by the
+// storage upload endpoint.
+func EncodeUploadResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeUploadRequest returns a decoder for requests sent to the storage
+// upload endpoint.
+func DecodeUploadRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			body UploadRequestBody
+			err  error
+		)
+		err = goahttp.MultiPartFileDecoder(r, "/tmp")
+		//err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+
+		return NewUploadUploadPayload(&body), nil
+	}
+}
+
 // marshalWineryToWineryResponseBody builds a value of type *WineryResponseBody
 // from a value of type *storage.Winery.
 func marshalWineryToWineryResponseBody(v *storage.Winery) *WineryResponseBody {

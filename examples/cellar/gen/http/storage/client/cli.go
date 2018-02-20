@@ -45,7 +45,7 @@ func BuildAddBottle(storageAddBody string) (*storage.Bottle, error) {
 	{
 		err = json.Unmarshal([]byte(storageAddBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"composition\": [\n         {\n            \"percentage\": 59,\n            \"varietal\": \"Syrah\"\n         },\n         {\n            \"percentage\": 59,\n            \"varietal\": \"Syrah\"\n         },\n         {\n            \"percentage\": 59,\n            \"varietal\": \"Syrah\"\n         },\n         {\n            \"percentage\": 59,\n            \"varietal\": \"Syrah\"\n         }\n      ],\n      \"description\": \"Red wine blend with an emphasis on the Cabernet Franc grape and including other Bordeaux grape varietals and some Syrah\",\n      \"name\": \"Blue\\'s Cuvee\",\n      \"rating\": 2,\n      \"vintage\": 1935,\n      \"winery\": {\n         \"country\": \"USA\",\n         \"name\": \"Longoria\",\n         \"region\": \"Central Coast, California\",\n         \"url\": \"http://www.longoriawine.com/\"\n      }\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"composition\": [\n         {\n            \"percentage\": 98,\n            \"varietal\": \"Syrah\"\n         },\n         {\n            \"percentage\": 98,\n            \"varietal\": \"Syrah\"\n         },\n         {\n            \"percentage\": 98,\n            \"varietal\": \"Syrah\"\n         },\n         {\n            \"percentage\": 98,\n            \"varietal\": \"Syrah\"\n         }\n      ],\n      \"description\": \"Red wine blend with an emphasis on the Cabernet Franc grape and including other Bordeaux grape varietals and some Syrah\",\n      \"name\": \"Blue\\'s Cuvee\",\n      \"rating\": 4,\n      \"vintage\": 1914,\n      \"winery\": {\n         \"country\": \"USA\",\n         \"name\": \"Longoria\",\n         \"region\": \"Central Coast, California\",\n         \"url\": \"http://www.longoriawine.com/\"\n      }\n   }'")
 		}
 		if body.Winery == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("winery", "body"))
@@ -125,4 +125,24 @@ func BuildRemoveRemovePayload(storageRemoveID string) (*storage.RemovePayload, e
 		ID: id,
 	}
 	return payload, nil
+}
+
+// BuildUploadUploadPayload builds the payload for the storage upload endpoint
+// from CLI flags.
+func BuildUploadUploadPayload(storageUploadBody string) (*storage.UploadPayload, error) {
+	var err error
+	var body UploadRequestBody
+	{
+		err = json.Unmarshal([]byte(storageUploadBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"path\": \"Et corporis rem.\"\n   }'")
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	v := &storage.UploadPayload{
+		Path: body.Path,
+	}
+	return v, nil
 }

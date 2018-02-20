@@ -342,6 +342,60 @@ func DecodeRateResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 	}
 }
 
+// BuildUploadRequest instantiates a HTTP request object with method and path
+// set to call the "storage" service "upload" endpoint
+func (c *Client) BuildUploadRequest(v interface{}) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UploadStoragePath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("storage", "upload", u.String(), err)
+	}
+
+	return req, nil
+}
+
+// EncodeUploadRequest returns an encoder for requests sent to the storage
+// upload server.
+func EncodeUploadRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*storage.UploadPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("storage", "upload", "*storage.UploadPayload", v)
+		}
+		if err := goahttp.MultiPartFileEncoder(req, "file", *p.Path); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+// DecodeUploadResponse returns a decoder for responses returned by the storage
+// upload endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+func DecodeUploadResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("account", "create", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // unmarshalWineryResponseBodyToWinery builds a value of type *storage.Winery
 // from a value of type *WineryResponseBody.
 func unmarshalWineryResponseBodyToWinery(v *WineryResponseBody) *storage.Winery {

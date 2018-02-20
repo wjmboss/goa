@@ -32,6 +32,13 @@ type AddRequestBody struct {
 	Rating *uint32 `form:"rating,omitempty" json:"rating,omitempty" xml:"rating,omitempty"`
 }
 
+// UploadRequestBody is the type of the "storage" service "upload" endpoint
+// HTTP request body.
+type UploadRequestBody struct {
+	// Path to the file
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+}
+
 // ListResponseBody is the type of the "storage" service "list" endpoint HTTP
 // response body.
 type ListResponseBody []*StoredBottleResponseBody
@@ -237,6 +244,14 @@ func NewRemoveRemovePayload(id string) *storage.RemovePayload {
 	return &storage.RemovePayload{
 		ID: id,
 	}
+}
+
+// NewUploadUploadPayload builds a storage service upload endpoint payload.
+func NewUploadUploadPayload(body *UploadRequestBody) *storage.UploadPayload {
+	v := &storage.UploadPayload{
+		Path: body.Path,
+	}
+	return v
 }
 
 // Validate runs the validations defined on AddRequestBody

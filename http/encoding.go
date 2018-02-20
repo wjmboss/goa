@@ -8,10 +8,14 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	goa "goa.design/goa"
@@ -177,6 +181,63 @@ func ErrorEncoder(encoder func(context.Context, http.ResponseWriter) Encoder) fu
 			w.Write([]byte(id + ": " + t.Error()))
 		}
 	}
+}
+
+// MultiPartFileEncoder creates a multipart request by encoding the request body
+// with the given file.
+func MultiPartFileEncoder(r *http.Request, field, path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	part, err := mw.CreateFormFile(field, filepath.Base(path))
+	if err != nil {
+		return err
+	}
+	if _, err = io.Copy(part, file); err != nil {
+		return err
+	}
+	if err = mw.Close(); err != nil {
+		return err
+	}
+	r.Body = ioutil.NopCloser(&buf)
+	r.Header.Set("Content-Type", mw.FormDataContentType())
+	return nil
+}
+
+// MultiPartFileDecoder reads the multipart body from the request and writes
+// it to the given file.
+func MultiPartFileDecoder(r *http.Request, path string) error {
+	reader, err := r.MultipartReader()
+	if err != nil {
+		return err
+	}
+	if reader == nil {
+		return fmt.Errorf("not a multipart request")
+	}
+	for {
+		part, err := reader.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to load part: %s", err)
+		}
+		file, err := os.OpenFile(filepath.Join(path, part.FileName()), os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return fmt.Errorf("failed to save file: %s", err)
+		}
+		defer file.Close()
+
+		if _, err := io.Copy(file, part); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SetContentType initializes the response Content-Type header given a mime type

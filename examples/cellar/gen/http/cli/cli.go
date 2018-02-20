@@ -27,7 +27,7 @@ import (
 //
 func UsageCommands() string {
 	return `sommelier pick
-storage (list|show|add|remove|rate)
+storage (list|show|add|remove|rate|upload)
 `
 }
 
@@ -77,6 +77,9 @@ func ParseEndpoint(
 
 		storageRateFlags = flag.NewFlagSet("rate", flag.ExitOnError)
 		storageRatePFlag = storageRateFlags.String("p", "REQUIRED", "map[uint32][]string is the payload type of the storage service rate method.")
+
+		storageUploadFlags    = flag.NewFlagSet("upload", flag.ExitOnError)
+		storageUploadBodyFlag = storageUploadFlags.String("body", "REQUIRED", "")
 	)
 	sommelierFlags.Usage = sommelierUsage
 	sommelierPickFlags.Usage = sommelierPickUsage
@@ -87,6 +90,7 @@ func ParseEndpoint(
 	storageAddFlags.Usage = storageAddUsage
 	storageRemoveFlags.Usage = storageRemoveUsage
 	storageRateFlags.Usage = storageRateUsage
+	storageUploadFlags.Usage = storageUploadUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -146,6 +150,9 @@ func ParseEndpoint(
 			case "rate":
 				epf = storageRateFlags
 
+			case "upload":
+				epf = storageUploadFlags
+
 			}
 
 		}
@@ -199,6 +206,9 @@ func ParseEndpoint(
 				if err != nil {
 					return nil, nil, fmt.Errorf("invalid JSON for storageRatePFlag, example of valid JSON:\n%s", "'{\n      \"1619338135\": [\n         \"Laboriosam consequatur delectus doloribus.\",\n         \"Est mollitia.\",\n         \"Voluptas ex enim.\",\n         \"Est explicabo eveniet dolore.\"\n      ],\n      \"1681700938\": [\n         \"Magnam ut consequatur.\",\n         \"Quo rerum et ut omnis praesentium non.\"\n      ]\n   }'")
 				}
+			case "upload":
+				endpoint = c.Upload()
+				data, err = storagec.BuildUploadUploadPayload(*storageUploadBodyFlag)
 			}
 		}
 	}
@@ -254,6 +264,7 @@ COMMAND:
     add: Add new bottle and return its ID.
     remove: Remove bottle from storage
     rate: Rate bottles by IDs
+    upload: Upload menu
 
 Additional help:
     %s storage COMMAND --help
@@ -277,7 +288,7 @@ Show bottle by ID
     -view STRING: 
 
 Example:
-    `+os.Args[0]+` storage show --id "Distinctio delectus vel earum doloribus." --view "tiny"
+    `+os.Args[0]+` storage show --id "Quis sapiente et sunt dolorem culpa." --view "default"
 `, os.Args[0])
 }
 
@@ -291,26 +302,26 @@ Example:
     `+os.Args[0]+` storage add --body '{
       "composition": [
          {
-            "percentage": 59,
+            "percentage": 98,
             "varietal": "Syrah"
          },
          {
-            "percentage": 59,
+            "percentage": 98,
             "varietal": "Syrah"
          },
          {
-            "percentage": 59,
+            "percentage": 98,
             "varietal": "Syrah"
          },
          {
-            "percentage": 59,
+            "percentage": 98,
             "varietal": "Syrah"
          }
       ],
       "description": "Red wine blend with an emphasis on the Cabernet Franc grape and including other Bordeaux grape varietals and some Syrah",
       "name": "Blue\'s Cuvee",
-      "rating": 2,
-      "vintage": 1935,
+      "rating": 4,
+      "vintage": 1914,
       "winery": {
          "country": "USA",
          "name": "Longoria",
@@ -328,7 +339,7 @@ Remove bottle from storage
     -id STRING: ID of bottle to remove
 
 Example:
-    `+os.Args[0]+` storage remove --id "Dignissimos sunt ut accusamus soluta."
+    `+os.Args[0]+` storage remove --id "Aut quaerat id."
 `, os.Args[0])
 }
 
@@ -350,6 +361,19 @@ Example:
          "Magnam ut consequatur.",
          "Quo rerum et ut omnis praesentium non."
       ]
+   }'
+`, os.Args[0])
+}
+
+func storageUploadUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] storage upload -body JSON
+
+Upload menu
+    -body JSON: 
+
+Example:
+    `+os.Args[0]+` storage upload --body '{
+      "path": "Et corporis rem."
    }'
 `, os.Args[0])
 }
