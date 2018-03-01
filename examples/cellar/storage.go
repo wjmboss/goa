@@ -103,3 +103,13 @@ func (s *storageSvc) Rate(ctx context.Context, p map[uint32][]string) error {
 	}
 	return nil
 }
+
+// MultipartDecodeFunc has the multipart request decode logic.
+func MultipartDecodeFunc(mr multipart.Reader, p *storage.Bottle) error {
+	// Add multipart decode logic here
+}
+
+// MultipartEncodeFunc has the multipart request encode logic.
+func MultipartEncodeFunc(mw multipart.Writer, p *storage.Bottle) error {
+	// Add multipart encode logic here
+}

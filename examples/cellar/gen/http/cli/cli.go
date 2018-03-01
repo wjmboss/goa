@@ -54,6 +54,7 @@ func ParseEndpoint(
 	enc func(*http.Request) goahttp.Encoder,
 	dec func(*http.Response) goahttp.Decoder,
 	restore bool,
+	menc storagec.StorageUploadEncoderFunc,
 ) (goa.Endpoint, interface{}, error) {
 	var (
 		sommelierFlags = flag.NewFlagSet("sommelier", flag.ContinueOnError)
@@ -146,6 +147,9 @@ func ParseEndpoint(
 			case "rate":
 				epf = storageRateFlags
 
+			case "upload":
+				epf = storageUploadFlags
+
 			}
 
 		}
@@ -199,6 +203,9 @@ func ParseEndpoint(
 				if err != nil {
 					return nil, nil, fmt.Errorf("invalid JSON for storageRatePFlag, example of valid JSON:\n%s", "'{\n      \"1619338135\": [\n         \"Laboriosam consequatur delectus doloribus.\",\n         \"Est mollitia.\",\n         \"Voluptas ex enim.\",\n         \"Est explicabo eveniet dolore.\"\n      ],\n      \"1681700938\": [\n         \"Magnam ut consequatur.\",\n         \"Quo rerum et ut omnis praesentium non.\"\n      ]\n   }'")
 				}
+			case "upload":
+				endpoint = c.Upload(menc)
+				data, err = BuildUploadUploadPayload(*storageUploadFlag)
 			}
 		}
 	}

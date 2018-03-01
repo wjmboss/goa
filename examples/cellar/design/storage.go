@@ -72,4 +72,16 @@ var _ = Service("storage", func() {
 			Response(StatusOK)
 		})
 	})
+
+	Method("upload", func() {
+		Description("Upload a menu")
+		Payload(Bottle)
+		HTTP(func() {
+			POST("/upload")
+			MultipartRequest(func() {
+				EncodeWith("encodefn")
+				DecodeWith("decodefn")
+			})
+		})
+	})
 })

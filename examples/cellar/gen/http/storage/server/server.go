@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"mime/multipart"
 	"net/http"
 
 	goa "goa.design/goa"
@@ -38,12 +39,17 @@ type MountPoint struct {
 	Pattern string
 }
 
+// StorageUploadDecoderFunc is the function to decode multipart request
+// for the endpoint upload of service storage.
+type StorageUploadDecoderFunc func(multipart.Reader, *storage.Bottle) error
+
 // New instantiates HTTP handlers for all the storage service endpoints.
 func New(
 	e *storage.Endpoints,
 	mux goahttp.Muxer,
 	dec func(*http.Request) goahttp.Decoder,
 	enc func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	storageUploadDecodefn StorageUploadDecoderFunc,
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
@@ -52,12 +58,14 @@ func New(
 			{"Add", "POST", "/storage"},
 			{"Remove", "DELETE", "/storage/{id}"},
 			{"Rate", "POST", "/storage/rate"},
+			{"Upload", "POST", "/storage/upload"},
 		},
 		List:   NewListHandler(e.List, mux, dec, enc),
 		Show:   NewShowHandler(e.Show, mux, dec, enc),
 		Add:    NewAddHandler(e.Add, mux, dec, enc),
 		Remove: NewRemoveHandler(e.Remove, mux, dec, enc),
 		Rate:   NewRateHandler(e.Rate, mux, dec, enc),
+		Upload: NewUploadHandler(e.Upload, mux, NewStorageUploadDecoder(storageUploadDecodefn), enc),
 	}
 }
 
@@ -71,6 +79,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountAddHandler(mux, h.Add)
 	MountRemoveHandler(mux, h.Remove)
 	MountRateHandler(mux, h.Rate)
+	MountUploadHander(mux, h.Upload)
 }
 
 // MountListHandler configures the mux to serve the "storage" service "list"
@@ -279,6 +288,52 @@ func NewRateHandler(
 		accept := r.Header.Get("Accept")
 		ctx := context.WithValue(r.Context(), goahttp.ContextKeyAcceptType, accept)
 		payload, err := decodeRequest(r)
+		if err != nil {
+			encodeError(ctx, w, err)
+			return
+		}
+
+		res, err := endpoint(ctx, payload)
+
+		if err != nil {
+			encodeError(ctx, w, err)
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			encodeError(ctx, w, err)
+		}
+	})
+}
+
+// MountUploadHandler configures the mux to serve the "storage" service "upload"
+// endpoint.
+func MountUploadHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/storage/upload", f)
+}
+
+// NewUploadHandler creates a HTTP handler which loads the HTTP request and calls
+// the "storage" service "upload" endpoint.
+func NewUploadHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	dec func(*http.Request) goahttp.Decoder,
+	enc func(context.Context, http.ResponseWriter) goahttp.Encoder,
+) http.Handler {
+	var (
+		decodeRequest  = dec
+		encodeResponse = EncodeRateResponse(enc)
+		encodeError    = goahttp.ErrorEncoder(enc)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accept := r.Header.Get("Accept")
+		ctx := context.WithValue(r.Context(), goahttp.ContextKeyAcceptType, accept)
+		payload, err := dec(r)
 		if err != nil {
 			encodeError(ctx, w, err)
 			return

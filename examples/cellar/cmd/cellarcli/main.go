@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"goa.design/goa/examples/cellar"
 	"goa.design/goa/examples/cellar/gen/http/cli"
 	goahttp "goa.design/goa/http"
 )
@@ -61,6 +62,7 @@ func main() {
 		goahttp.RequestEncoder,
 		goahttp.ResponseDecoder,
 		debug,
+		cellar.MultipartEncodeFunc,
 	)
 	if err != nil {
 		if err == flag.ErrHelp {

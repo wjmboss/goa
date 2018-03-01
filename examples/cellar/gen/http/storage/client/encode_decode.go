@@ -358,6 +358,35 @@ func DecodeRateResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 	}
 }
 
+// BuildUploadRequest instantiates a HTTP request object with method and path set
+// to call the "storage" service "upload" endpoint
+func (c *Client) BuildUploadRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UploadStoragePath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("storage", "upload", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// NewStorageUploadEncoder encodes the multipart request for the endpoint
+// upload of service storage.
+func NewStorageUploadEncoder(me StorageUploadEncoderFunc) func(*http.Request) goahttp.Encoder {
+	return func(r *http.Request) goahttp.Encoder {
+		body := &bytes.Buffer()
+		mw := multipart.NewWriter(body)
+		return func(v interface{}) error {
+			p := v.(*storage.Bottle)
+			me(mw, p)
+			r.Write(body)
+		}
+	}
+}
+
 // unmarshalWineryResponseBodyToWinery builds a value of type *storage.Winery
 // from a value of type *WineryResponseBody.
 func unmarshalWineryResponseBodyToWinery(v *WineryResponseBody) *storage.Winery {

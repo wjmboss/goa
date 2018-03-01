@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	"mime/multipart"
 	"net/http"
 
 	goa "goa.design/goa"
@@ -41,6 +42,10 @@ type Client struct {
 	host    string
 	encoder func(*http.Request) goahttp.Encoder
 	decoder func(*http.Response) goahttp.Decoder
+
+	// StorageUploadDecoderFunc is the function to encode multipart request
+	// for the endpoint upload of service storage.
+	StorageUploadDecoderFunc func(multipart.Writer, *storage.Bottle) error
 }
 
 // NewClient instantiates HTTP clients for all the storage service servers.
@@ -166,6 +171,32 @@ func (c *Client) Rate() goa.Endpoint {
 	var (
 		encodeRequest  = EncodeRateRequest(c.encoder)
 		decodeResponse = DecodeRateResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildRateRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := c.RateDoer.Do(req)
+
+		if err != nil {
+			return nil, goahttp.ErrRequestError("storage", "rate", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Upload returns an endpoint that makes HTTP requests to the storage service
+// upload server.
+func (c *Client) Upload(me StorageUploadEncoderFunc) goa.Endpoint {
+	var (
+		encodeRequest  = me
+		decodeResponse = DecodeUploadResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v interface{}) (interface{}, error) {
 		req, err := c.BuildRateRequest(ctx, v)

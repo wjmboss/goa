@@ -193,6 +193,18 @@ func DecodeRateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 	}
 }
 
+// NewStorageUploadDecoder decodes the multipart request for the endpoint
+// upload of service storage.
+func NewStorageUploadDecoder(md StorageUploadDecoderFunc) func(r *http.Request) goahttp.Decoder {
+	return func(r *http.Request) goahttp.Decoder {
+		mr := r.MultipartReader()
+		return func(v interface{}) error {
+			p := v.(*storage.Bottle)
+			return md(mr, p)
+		}
+	}
+}
+
 // marshalWineryToWineryResponseBody builds a value of type *WineryResponseBody
 // from a value of type *storage.Winery.
 func marshalWineryToWineryResponseBody(v *storage.Winery) *WineryResponseBody {
